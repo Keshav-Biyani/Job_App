@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Lokal Job App</string>
+    <string name="error_occurred">"An error occurred"</string>
+    <string name="accept">accept</string>
+</resources>
