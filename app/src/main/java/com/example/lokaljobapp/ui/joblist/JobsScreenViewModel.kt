@@ -25,31 +25,35 @@ class JobsScreenViewModel : ViewModel() {
     private var currentPage = 1
     private var endReached = false
 
-    fun getJobList(){
+    fun getJobList() {
         viewModelScope.launch(Dispatchers.Main) {
             try {
-
-
                 val response = RetrofitInstance.apiService.getJobs(currentPage)
-                val currentList =
-                    (_uiState.value as? JobsScreenUiState.Success)?.joblist?.results ?: emptyList()
+                val currentList = (_uiState.value as? JobsScreenUiState.Success)?.joblist?.results ?: emptyList()
 
-                if (response.body()?.results?.isEmpty() == true) {
+                if (response.body()?.results.isNullOrEmpty()) {
                     endReached = true
                 } else {
-                    //   _jobs.value += response.body()?.results!!
-                    val updatedList = currentList + response.body()?.results!!
-                    Log.e("resilt",updatedList.toString())
-                    _uiState.value = JobsScreenUiState.Success(Job_Response(updatedList))
-                    currentPage++
+                    // Filter out null and invalid entries (e.g., entries with null or empty title, salary, or location)
+                    val validResults = response.body()?.results?.filter { job ->
+                        job != null && !job.title.isNullOrBlank()
+                    } ?: emptyList()
 
-
+                    // Only update the list if there are valid results
+                    if (validResults.isNotEmpty()) {
+                        val updatedList = currentList + validResults
+                        Log.e("Resulit",validResults.size.toString())
+                        _uiState.value = JobsScreenUiState.Success(Job_Response(updatedList))
+                        currentPage++
+                    } else if (validResults.isEmpty() && currentList.isEmpty()) {
+                        _uiState.value = JobsScreenUiState.Error("No valid job listings found.")
+                    }
                 }
-            }catch (e : Exception){
+            } catch (e: Exception) {
                 _uiState.value = JobsScreenUiState.Error(e.localizedMessage ?: "An error occurred")
-
             }
         }
     }
+
 
 }

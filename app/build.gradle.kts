@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("kotlin-kapt")
 }
 
 android {
@@ -70,6 +71,20 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation( libs.retrofit)
     implementation(libs.androidx.material)
+
+        implementation(libs.androidx.material.v170rc01)
+
+        implementation (libs.androidx.material.icons.extended)
+        // Replace <compose_version> with your Compose version, like "1.5.0" or newer
+    implementation(libs.androidx.room.ktx)
+    implementation (libs.androidx.room.runtime)
+    //annotationProcessor("androidx.room:room-compiler:2.6.1")
+
+    //annotationProcessor("androidx.room:room-compiler:2.6.1")
+
+    kapt("androidx.room:room-compiler:2.6.1")
+
+
     // Converter for JSON data (e.g., Gson)
     implementation (libs.converter.gson)
 }
