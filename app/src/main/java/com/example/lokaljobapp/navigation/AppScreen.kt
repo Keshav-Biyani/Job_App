@@ -3,6 +3,7 @@ package com.example.lokaljobapp.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocalMall
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
@@ -15,7 +16,7 @@ sealed class AppScreen(val route: String) {
 
 }
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
-    data object Jobs : BottomNavItem("home", Icons.Default.ShoppingBag, "Jobs")
+    data object Jobs : BottomNavItem("home", Icons.Default.LocalMall, "Jobs")
     data object BookMark : BottomNavItem("search", Icons.Filled.Bookmarks, "BookMark")
     //object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")
 }

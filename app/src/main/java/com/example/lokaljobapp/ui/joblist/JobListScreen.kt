@@ -46,6 +46,7 @@ import com.example.lokaljobapp.MainActivity
 import com.example.lokaljobapp.R
 import com.example.lokaljobapp.api.response.Result
 import com.example.lokaljobapp.navigation.AppScreen
+import com.example.lokaljobapp.navigation.BottomNavItem
 import com.example.lokaljobapp.ui.viewModel.BookMarkViewModel
 import com.example.lokaljobapp.ui.viewModel.SharedViewModel
 
@@ -91,7 +92,7 @@ private fun ErrorScreen(navController: NavHostController, error: String = "") {
         text = { Text(error) },
         confirmButton = {
             Text(
-                modifier = Modifier.clickable { navController.popBackStack() },
+                modifier = Modifier.clickable { navController.navigate(BottomNavItem.BookMark.route) },
                 text = stringResource(R.string.accept),
             )
         },

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.IconButton
@@ -20,12 +21,15 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SmallTopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,95 +51,133 @@ import com.example.lokaljobapp.ui.viewModel.SharedViewModel
 @Composable
 fun JobDetailsScreen(
     sharedViewModel: SharedViewModel,
-    bookMarkViewModel: BookMarkViewModel
+    bookMarkViewModel: BookMarkViewModel,
+    onBackClick: () -> Unit // This function will handle back navigation
 ) {
-    val job = sharedViewModel.jobData.value!!
-
-    JobDetailsScreen(jobDetails = job,bookMarkViewModel)
-
-    
-}
-@Composable
-fun JobDetailsScreen(jobDetails: Result, bookMarkViewModel: BookMarkViewModel) {
+    val jobDetails = sharedViewModel.jobData.value!!
     val bookmarks by bookMarkViewModel.bookmarks.collectAsState()
     val isBookmarked = bookmarks.any { it.id == jobDetails.id }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .padding(16.dp)
-    ) {
-        // Job Title and Company Name
-        Text(
-            text = jobDetails.title,
-            style = MaterialTheme.typography.titleLarge,
-            color = Color.Black,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Text(
-            text = jobDetails.company_name,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Job Details Section
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                modifier = Modifier.weight(1f), // Allow this Row to take up remaining space
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.LocationOn, contentDescription = "Location", modifier = Modifier.weight(0.15f), tint = Color(0xFF2196F3))
-                Text(text = jobDetails.primary_details.Place, modifier = Modifier.weight(0.35f), style = MaterialTheme.typography.bodyMedium)
-
-                Icon(Icons.Default.Money, contentDescription = "Salary", modifier = Modifier.weight(0.15f), tint = Color.Gray)
-                Text(text = jobDetails.primary_details.Salary, modifier = Modifier.weight(0.35f), style = MaterialTheme.typography.bodyMedium)
-            }
-
-            // Bookmark Icon
-            IconButton(
-                onClick = {
-                    bookMarkViewModel.onBookmarkClick(jobDetails, isBookmarked)
-                },
-                modifier = Modifier
-                    .size(24.dp) // Ensure the icon has a fixed size
-                    .align(Alignment.CenterVertically) // Align icon vertically
-            ) {
-                Icon(
-                    imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-                    contentDescription = "Bookmark",
-                    tint = if (isBookmarked) Color(0xFF0E56A8) else Color.Gray
-                )
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text(text = "Job Details") },
+                navigationIcon = {
+                    IconButton(onClick = { onBackClick() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
         }
-
-        // Detailed Sections
-        JobDetailSection("Job Type", jobDetails.primary_details.Job_Type)
-        JobDetailSection("Experience", jobDetails.primary_details.Experience)
-        JobDetailSection("Qualification", jobDetails.primary_details.Qualification)
-        JobDetailSection("Vacancies", jobDetails.job_tags.firstOrNull()?.value ?: "")
-        JobDetailSection("Job Role", jobDetails.job_role)
-
-        // Contact HR Button
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = { /* Handle call to HR */ },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E56A8)),
-            modifier = Modifier.fillMaxWidth()
+    ) { paddingValues ->
+        LazyColumn(
+            contentPadding = paddingValues,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(16.dp)
         ) {
-            Text(text = "📞 Call HR", color = Color.White)
+            item {
+                // Job Title and Company Name
+                Text(
+                    text = jobDetails.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    text = jobDetails.company_name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Job Details Section
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = "Location",
+                            modifier = Modifier.weight(0.15f),
+                            tint = Color(0xFF2196F3)
+                        )
+                        Text(
+                            text = jobDetails.primary_details.Place,
+                            modifier = Modifier.weight(0.85f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    // Bookmark Icon
+                    IconButton(
+                        onClick = {
+                            bookMarkViewModel.onBookmarkClick(jobDetails, isBookmarked)
+                        },
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.CenterVertically)
+                    ) {
+                        Icon(
+                            imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+                            contentDescription = "Bookmark",
+                            tint = if (isBookmarked) Color(0xFF0E56A8) else Color.Gray
+                        )
+                    }
+                }
+
+                // Salary Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Money,
+                        contentDescription = "Salary",
+                        modifier = Modifier.weight(0.15f),
+                        tint = Color.Gray
+                    )
+                    Text(
+                        text = jobDetails.primary_details.Salary,
+                        modifier = Modifier.weight(0.85f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                // Detailed Sections
+                JobDetailSection("Job Type", jobDetails.primary_details.Job_Type)
+                JobDetailSection("Experience", jobDetails.primary_details.Experience)
+                JobDetailSection("Qualification", jobDetails.primary_details.Qualification)
+                JobDetailSection("Vacancies", jobDetails.job_tags.firstOrNull()?.value ?: "")
+                JobDetailSection("Job Role", jobDetails.job_role)
+                JobDetailSection("Job Category", jobDetails.job_category)
+                JobDetailSection("Job Hours", jobDetails.job_hours)
+                JobDetailSection("Number of Applications", jobDetails.num_applications.toString())
+                JobDetailSection("Job Description", jobDetails.other_details)
+
+                // Contact HR Button
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { /* Handle call to HR */ },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E56A8)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "📞 Call HR", color = Color.White)
+                }
+            }
         }
     }
 }
-
 
 @Composable
 fun JobDetailSection(label: String, detail: String) {
@@ -157,105 +199,3 @@ fun JobDetailSection(label: String, detail: String) {
         )
     }
 }
-
-//Scaffold(
-//topBar = {
-//    TopAppBar(
-//        title = { Text(text = job.title, style = MaterialTheme.typography.titleLarge) },
-//        actions = {
-//            IconButton(onClick = {
-//                bookMarkViewModel.onBookmarkClick(job,isBookmarked)
-//            }) {
-//
-//                Icon(
-//                    imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-//                    contentDescription = "Bookmark",
-//                    tint = if (isBookmarked) Color.Blue else Color.Gray
-//                )
-//            }
-//        }
-//    )
-//}
-//) { paddingValues ->
-//    Column(
-//        modifier = Modifier
-//            .padding(paddingValues)
-//            .fillMaxSize()
-//            .background(color = Color.White)
-//            .padding(16.dp)
-//    ) {
-//        // Company Name
-//        Text(
-//            text = job.company_name,
-//            style = MaterialTheme.typography.bodyMedium,
-//            color = Color.Gray
-//        )
-//
-//        Spacer(modifier = Modifier.height(8.dp))
-//
-//        // Job Title
-//        Text(
-//            text = job.title,
-//            style = MaterialTheme.typography.headlineMedium,
-//            color = Color.Black,
-//            modifier = Modifier.padding(bottom = 4.dp)
-//        )
-//
-//        Spacer(modifier = Modifier.height(8.dp))
-//
-//        // Location
-//        Row(verticalAlignment = Alignment.CenterVertically) {
-//            Icon(
-//                imageVector = Icons.Default.LocationOn,
-//                contentDescription = "Location",
-//                tint = Color.Gray
-//            )
-//            Spacer(modifier = Modifier.width(4.dp))
-//            Text(
-//                text = job.primary_details.Place,
-//                style = MaterialTheme.typography.bodyMedium,
-//                color = Color.Gray
-//            )
-//        }
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        // Salary
-//        Text(
-//            text = "Salary: ${job.primary_details.Salary}",
-//            style = MaterialTheme.typography.bodyLarge,
-//            color = Color.Black
-//        )
-//
-//        Spacer(modifier = Modifier.height(8.dp))
-//
-//        // Experience
-//        Text(
-//            text = "Experience: ${job.primary_details.Experience}",
-//            style = MaterialTheme.typography.bodyMedium,
-//            color = Color.Gray
-//        )
-//
-//        Spacer(modifier = Modifier.height(8.dp))
-//
-//        // Job Type
-//        Text(
-//            text = "Job Type: ${job.primary_details.Job_Type}",
-//            style = MaterialTheme.typography.bodyMedium,
-//            color = Color.Gray
-//        )
-//
-//        Spacer(modifier = Modifier.height(16.dp))
-//
-//        // Apply Button
-//        Button(
-//            onClick = {
-//
-//            },
-//            modifier = Modifier.fillMaxWidth(),
-//            colors = ButtonDefaults.buttonColors(containerColor = Color.Blue)
-//        ) {
-//            Text(text = "Apply Now", color = Color.White)
-//        }
-//    }
-//}

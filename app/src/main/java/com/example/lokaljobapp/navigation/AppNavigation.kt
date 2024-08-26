@@ -29,7 +29,9 @@ fun AppNavigation(navController: NavHostController) {
             BookMarkScreen(navController,bookMarkViewModel,sharedViewModel)
         }
         composable(AppScreen.JobDetailScreen.route){
-            JobDetailsScreen(sharedViewModel,bookMarkViewModel)
+            JobDetailsScreen(sharedViewModel,bookMarkViewModel){
+                navController.popBackStack()
+            }
         }
     }
 }
