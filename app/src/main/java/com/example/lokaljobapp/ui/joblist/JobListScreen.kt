@@ -1,12 +1,18 @@
 package com.example.lokaljobapp.ui.joblist
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,10 +21,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -147,8 +158,10 @@ fun JobCard(
     job: Result,
     isBookmarked: Boolean,
     onBookmarkClick: () -> Unit,
-    onCardClick:()->Unit
+    onCardClick: () -> Unit,
+
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -158,80 +171,129 @@ fun JobCard(
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
         shape = RoundedCornerShape(8.dp)
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(16.dp)
+                .fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Job Title
-                Text(
-                    text = job.title,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold // Bold font similar to LinkedIn
-                    ),
-                    color = Color.Black,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-
-                // Location Row
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Location Icon",
-                        tint = Color(0xFF2196F3), // Blue color for the icon
-                        modifier = Modifier
-                            .size(20.dp)
-                            .padding(end = 4.dp)
-                    )
+                    // Job Title
                     Text(
-                        text = job.primary_details.Place,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium // Medium weight for a clean look
+                        text = job.title,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold // Bold font similar to LinkedIn
                         ),
-                        color = Color.Gray
+                        color = Color.Black,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
+                    // Location Row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Location Icon",
+                            tint = Color(0xFF2196F3), // Blue color for the icon
+                            modifier = Modifier
+                                .size(20.dp)
+                                .padding(end = 4.dp)
+                        )
+                        Text(
+                            text = job.primary_details.Place,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium // Medium weight for a clean look
+                            ),
+                            color = Color.Gray
+                        )
+                    }
+
+                    // Salary
+                    Text(
+                        text = job.primary_details.Salary,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = Color.Black,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
+                    // Experience
+                    Text(
+                        text = job.primary_details.Experience,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = Color(0xFF0073B1) // LinkedIn blue for highlights
+                        )
                     )
                 }
 
-                // Salary
-                Text(
-                    text = job.primary_details.Salary,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = Color.Black,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-
-                // Experience
-                Text(
-                    text = job.primary_details.Experience,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color(0xFF0073B1) // LinkedIn blue for highlights
+                // Bookmark Icon
+                IconButton(
+                    onClick = onBookmarkClick,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+                        contentDescription = "Bookmark",
+                        tint = if (isBookmarked) Color(0xFF0E56A8) else Color.Gray
                     )
-                )
+                }
             }
 
-            // Bookmark Icon
-            IconButton(
-                onClick = onBookmarkClick,
-                modifier = Modifier.size(24.dp)
+            // Buttons for Chat and Call HR
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Icon(
-                    imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-                    contentDescription = "Bookmark",
-                    tint = if (isBookmarked) Color(0xFF0E56A8) else Color.Gray
-                )
+                Button(
+                    onClick = {
+                        val chatUrl = job.contact_preference.whatsapp_link
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(chatUrl))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        ,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White,
+                        contentColor = Color.Black
+                    ),
+                    elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 0.dp),
+                    border = BorderStroke(1.dp,Color.Gray)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.whatsapp_svgrepo_com),
+                        contentDescription = "WhatsApp Icon",
+                        tint = Color(0xFF25D366), // WhatsApp green
+                        modifier = Modifier
+                            .size(30.dp)
+                            .padding(end = 8.dp)
+                    )
+                    Text(text = "Chat")
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        Toast.makeText(context,"HR Will Call You", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E56A8))
+                ) {
+                    Text(text = "Call HR", color = Color.White)
+                }
             }
         }
     }
 }
-
-
-

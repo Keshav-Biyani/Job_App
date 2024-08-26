@@ -51,7 +51,8 @@ fun MainScreen() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     LaunchedEffect(navBackStackEntry) {
         showBottomBar = when (navBackStackEntry?.destination?.route) {
-            AppScreen.JobDetailScreen.route -> false // Adjust route name based on your NavGraph
+            AppScreen.JobDetailScreen.route -> false
+            AppScreen.SplashScreen.route->false// Adjust route name based on your NavGraph
             else -> true
         }
     }

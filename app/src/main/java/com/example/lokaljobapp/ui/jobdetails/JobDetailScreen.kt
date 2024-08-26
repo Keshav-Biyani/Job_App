@@ -1,5 +1,6 @@
 package com.example.lokaljobapp.ui.jobdetails
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.lokaljobapp.api.response.JobTag
@@ -57,7 +59,7 @@ fun JobDetailsScreen(
     val jobDetails = sharedViewModel.jobData.value!!
     val bookmarks by bookMarkViewModel.bookmarks.collectAsState()
     val isBookmarked = bookmarks.any { it.id == jobDetails.id }
-
+val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = "Job Details") },
@@ -168,7 +170,9 @@ fun JobDetailsScreen(
                 // Contact HR Button
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
-                    onClick = { /* Handle call to HR */ },
+                    onClick = {
+                        Toast.makeText(context,"HR Will Call You",Toast.LENGTH_SHORT).show()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0E56A8)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
