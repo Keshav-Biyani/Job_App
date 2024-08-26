@@ -2,13 +2,11 @@ package com.example.lokaljobapp.ui.joblist
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,9 +15,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,18 +28,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,11 +45,14 @@ import androidx.navigation.NavHostController
 import com.example.lokaljobapp.MainActivity
 import com.example.lokaljobapp.R
 import com.example.lokaljobapp.api.response.Result
+import com.example.lokaljobapp.navigation.AppScreen
+import com.example.lokaljobapp.ui.viewModel.BookMarkViewModel
+import com.example.lokaljobapp.ui.viewModel.SharedViewModel
 
 inline fun <reified T : ViewModel> Context.getViewModel() =
     ViewModelProvider(this as MainActivity)[T::class.java]
 @Composable
-fun JobListScreen(navController: NavHostController){
+fun JobListScreen(navController: NavHostController,bookMarkViewModel: BookMarkViewModel,sharedViewModel: SharedViewModel){
     val viewModel = LocalContext.current.getViewModel<JobsScreenViewModel>()
     val uiState: JobsScreenUiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -66,7 +65,7 @@ fun JobListScreen(navController: NavHostController){
             val jobList = (uiState as JobsScreenUiState.Success).joblist.results
             Log.e("HELLO",jobList.toString())
 
-            SuccessScreen(navController = navController,jobList ,viewModel)
+            SuccessScreen(navController = navController,jobList ,viewModel,bookMarkViewModel,sharedViewModel)
 
 
         }
@@ -107,19 +106,34 @@ private fun ErrorScreen(navController: NavHostController, error: String = "") {
 private fun SuccessScreen(
     navController: NavHostController,
     jobList: List<Result>,
-    viewModel: JobsScreenViewModel
+    viewModel: JobsScreenViewModel,
+    bookMarkViewModel: BookMarkViewModel,
+    sharedViewModel: SharedViewModel
 ) {
+    val bookmarks by bookMarkViewModel.bookmarks.collectAsState()
 
     Log.e("HELLO","HELLO123Scree")
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(jobList.size) { index ->
-            JobCard(jobList[index],                isBookmarked = false,
-                onBookmarkClick = {
+            val job = jobList[index]
 
-                })
-if(index>= jobList.size -1){
-viewModel.getJobList()
-}
+            val isBookmarked = bookmarks.any { it.id == job.id }
+            Log.e("JobCheck", "Job: ${job.title}, isBookmarked: $isBookmarked")
+            JobCard(job,
+                isBookmarked = isBookmarked,
+                onBookmarkClick = {
+                    bookMarkViewModel.onBookmarkClick(jobList[index],isBookmarked)
+                    Log.e("BookMark",isBookmarked.toString())
+
+                }){
+sharedViewModel.updatejobData(job)
+                navController.navigate(AppScreen.JobDetailScreen.route)
+            }
+
+            if(index>= jobList.size -1){
+                viewModel.getJobList()
+            }
+
         }
 
 
@@ -129,14 +143,16 @@ viewModel.getJobList()
 }
 @Composable
 fun JobCard(
-    job : Result,
+    job: Result,
     isBookmarked: Boolean,
-    onBookmarkClick: () -> Unit
+    onBookmarkClick: () -> Unit,
+    onCardClick:()->Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable(onClick = onCardClick),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
         shape = RoundedCornerShape(8.dp)
@@ -148,42 +164,68 @@ fun JobCard(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(
-                modifier = Modifier.weight(1f) // Take all available space except for the icon
+                modifier = Modifier.weight(1f)
             ) {
+                // Job Title
                 Text(
                     text = job.title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold // Bold font similar to LinkedIn
+                    ),
                     color = Color.Black,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
-                Text(
-                    text = job.primary_details.Place,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
+
+                // Location Row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(bottom = 4.dp)
-                )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Location Icon",
+                        tint = Color(0xFF2196F3), // Blue color for the icon
+                        modifier = Modifier
+                            .size(20.dp)
+                            .padding(end = 4.dp)
+                    )
+                    Text(
+                        text = job.primary_details.Place,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium // Medium weight for a clean look
+                        ),
+                        color = Color.Gray
+                    )
+                }
+
+                // Salary
                 Text(
                     text = job.primary_details.Salary,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
                     color = Color.Black,
                     modifier = Modifier.padding(bottom = 4.dp)
                 )
+
+                // Experience
                 Text(
                     text = job.primary_details.Experience,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Blue
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color(0xFF0073B1) // LinkedIn blue for highlights
+                    )
                 )
             }
 
+            // Bookmark Icon
             IconButton(
                 onClick = onBookmarkClick,
-                modifier = Modifier
-                    .size(24.dp) // Size of the icon
+                modifier = Modifier.size(24.dp)
             ) {
                 Icon(
                     imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
                     contentDescription = "Bookmark",
-                    tint = if (isBookmarked) Color.Yellow else Color.Gray
+                    tint = if (isBookmarked) Color(0xFF0E56A8) else Color.Gray
                 )
             }
         }
@@ -192,103 +234,3 @@ fun JobCard(
 
 
 
-
-
-
-@Composable
-fun JobCard(
-   job : Result
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)), // Light gray background color
-        shape = RoundedCornerShape(8.dp) // Rounded corners
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
-            Text(
-                text = job.title,
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                text = job.primary_details.Place,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                text = job.primary_details.Salary,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            Text(
-                text = job.primary_details.Experience,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Blue, // Make the phone number stand out
-            )
-        }
-    }
-}
-@Composable
-fun JobItem(job: Result) {
-    // Your UI for displaying a job item
-   // Text(text = job.title ?: "hello", color = Color.Black)
-    Box(
-        contentAlignment = Center,
-        modifier = Modifier
-            .shadow(5.dp, RoundedCornerShape(8.dp))
-            .clip(RoundedCornerShape(8.dp))
-            .aspectRatio(1f) // Making it a square
-            .background(Color.Magenta)
-            .clickable {
-
-            }
-    ) {
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = job.title ?: "Hello",
-                    // fontFamily = RobotoCondensed,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text =  try {
-                        job.primary_details.Salary ?: "Hello"
-                    }catch (e : Exception){
-                        e.toString()
-                    },
-                    // fontFamily = RobotoCondensed,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f),
-                )
-//                Text(
-//                    text = job.primary_details.Place ?: "Hello",
-//                    // fontFamily = RobotoCondensed,
-//                    fontSize = 20.sp,
-//                    color = MaterialTheme.colorScheme.tertiary,
-//                    modifier = Modifier.weight(1f),
-//                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "Forward",
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-    }
